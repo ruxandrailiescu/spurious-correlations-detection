@@ -4,9 +4,10 @@ import constants
 import torch
 from models import SentenceEncoder
 import numpy as np
+import fire
 
 
-def cache_embeddings_text(dataset: str, device: str = 'cuda'):
+def cache_embeddings_text(dataset: str = 'MMLUPro', device: str = 'cuda'):
     path = os.path.join(constants.DATA_PATH,
                         constants.DATASET_DIR[dataset],
                         constants.DATASET_FILE[dataset])
@@ -43,3 +44,7 @@ def cache_embeddings_text(dataset: str, device: str = 'cuda'):
     class_embeddings = model.encode_texts_batched(class_names, device, bs=128).numpy()
     class_embeddings_path = os.path.join(output_dir, 'class_embeddings.npy')
     np.save(class_embeddings_path, class_embeddings)
+
+
+if __name__ == '__main__':
+    fire.Fire(cache_embeddings_text)

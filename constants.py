@@ -8,17 +8,14 @@ CACHE_PATH = os.environ.get('CACHE_PATH', './cache/')
 
 DATASET_DIR = {
     'MMLUPro': 'mmlu_pro',
-    'MMMUPro': 'mmmu_pro',
 }
 
 DATASET_FILE = {
     'MMLUPro': 'mmlu_pro_v2.csv',
-    'MMMUPro': 'mmmu_pro.csv',
 }
 
 METADATA_FILE = {
     'MMLUPro': 'metadata_mmlu_pro.csv',
-    'MMMUPro': 'metadata_mmmu_pro.csv',
 }
 
 SPLITS = ['train', 'val']
@@ -30,8 +27,7 @@ DATASET_SPLITS = {
 }
 
 DATASET_CLASSES = {
-    'MMLUPro': [],
-    'MMMUPro': ['Easy', 'Medium', 'Hard'],
+    'MMLUPro': ['correct', 'incorrect'],
 }
 
 SEED = 5454
