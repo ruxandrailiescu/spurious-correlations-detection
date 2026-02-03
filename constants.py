@@ -1,24 +1,17 @@
 import os
 
 
-DATA_PATH = os.environ.get('DATA_PATH', './data/')
 RESULTS_PATH = os.environ.get('RESULTS_PATH', './results/')
-CKPT_PATH = os.environ.get('CKPT_PATH', './ckpt/')
-CACHE_PATH = os.environ.get('CACHE_PATH', './cache/')
-
-DATASET_DIR = {
-    'MMLUPro': 'mmlu_pro',
-}
+CLASSIFIER_PATH = os.environ.get('CLASSIFIER_PATH', './classifiers/')
+DATA_PATH = os.environ.get('DATA_PATH', './data/')
 
 DATASET_FILE = {
-    'MMLUPro': 'mmlu_pro_v2.csv',
+    'mnli': 'input_mnli.csv'
 }
 
 METADATA_FILE = {
-    'MMLUPro': 'metadata_mmlu_pro.csv',
+    'mnli': 'metadata_mnli.csv'
 }
-
-SPLITS = ['train', 'val']
 
 DATASET_SPLITS = {
     'train': 0,
@@ -27,7 +20,9 @@ DATASET_SPLITS = {
 }
 
 DATASET_CLASSES = {
-    'MMLUPro': ['correct', 'incorrect'],
+    'mnli': ['fiction', 'government', 'slate', 'telephone', 'travel']
 }
 
 SEED = 5454
+
+SPLITS = ['train', 'val']
