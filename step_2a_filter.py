@@ -66,6 +66,16 @@ def extract_and_filter_keywords(dataset: str, device_str: str, only_spurious: bo
         kws_dict = {i: kws for i, kws in enumerate(class_keywords)}
         np.save(kw_cache_file, kws_dict)
 
+    # Save extracted n-grams per class to CSV
+    ngrams_csv_path = os.path.join(kw_cache_dir, f"extracted_ngrams{ending}.csv")
+    rows = []
+    for cls_idx, kws in enumerate(class_keywords):
+        cls_name = ds_config["classes"][cls_idx]
+        for kw in kws:
+            rows.append({"class": cls_name, "keyword": kw})
+    pd.DataFrame(rows).to_csv(ngrams_csv_path, index=False)
+    logging.info(f"Saved extracted n-grams to {ngrams_csv_path}")
+
     # Merge all class keywords into a global set
     all_keywords = list(set(sum(class_keywords, [])))
     logging.info(f"Total unique keywords before filtering: {len(all_keywords)}")
@@ -90,6 +100,11 @@ def extract_and_filter_keywords(dataset: str, device_str: str, only_spurious: bo
 
     logging.info(f"Keywords after filtering: {len(clean_keywords)}")
     logging.info(f"Filtered out: {len(all_keywords) - len(clean_keywords)} keywords")
+
+    # Save remaining (clean) keywords to CSV
+    remaining_csv_path = os.path.join(kw_cache_dir, f"remaining_keywords{ending}.csv")
+    pd.DataFrame({"keyword": clean_keywords}).to_csv(remaining_csv_path, index=False)
+    logging.info(f"Saved remaining keywords to {remaining_csv_path}")
 
     # Encode filtered keywords
     logging.info("Encoding filtered keywords...")

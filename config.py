@@ -1,7 +1,7 @@
 import os
 
 
-DATA_PATH = os.environ.get("DATA_PATH", "./data/")
+DATA_PATH = os.environ.get("DATA_PATH", "./")
 RESULTS_PATH = os.environ.get("RESULTS_PATH", "./results/")
 CACHE_PATH = os.environ.get("CACHE_PATH", "./cache/")
 
@@ -17,45 +17,15 @@ CACHE_PATH = os.environ.get("CACHE_PATH", "./cache/")
 #   classes_explicit – human description of class concepts (used for keyword filtering)
 
 DATASETS = {
-    "Waterbirds": {
-        "metadata": "metadata_waterbirds.csv",
-        "directory": "waterbirds",
-        "image_dir": "waterbird_complete95_forest2water2",
-        "classes": ["landbird", "waterbird"],
-        "class_bias": [0, 1],
-        "text_file": None,
-        "classes_wn": ["bird", "bird"],
-        "classes_explicit": "birds and any specific species of birds",
-    },
-    "CelebA": {
-        "metadata": "metadata_celeba.csv",
-        "directory": "celeba",
-        "image_dir": "img_align_celeba",
-        "classes": ["non-blonde hair", "blonde hair"],
-        "class_bias": [1, 0],
-        "text_file": None,
-        "classes_wn": ["hair", "hair"],
-        "classes_explicit": "hair and its color (blonde, black, brown, red, gray etc.)",
-    },
-    "CivilComments": {
-        "metadata": "metadata_civilcomments_coarse.csv",
-        "directory": "civilcomments",
+    "ISIC": {
+        "metadata": "metadata_isic.csv",
+        "directory": "archive",
         "image_dir": "",
-        "classes": ["non-offensive", "offensive"],
-        "class_bias": [1, 0],
-        "text_file": ("civilcomments_coarse.csv", "comment_text"),
-        "classes_wn": ["non-offensive", "offensive"],
-        "classes_explicit": "remove any offensive words or remarks",
-    },
-    "MNLI": {
-        "metadata": "metadata_mnli.csv",
-        "directory": "mnli",
-        "image_dir": "",
-        "classes": ["fiction", "government", "slate", "telephone", "travel"],
+        "classes": ["benign", "malignant"],
         "class_bias": None,
-        "text_file": ("mnli_questions.csv", "question_text"),
-        "classes_wn": ["fiction", "government", "slate", "telephone", "travel"],
-        "classes_explicit": "genre labels (fiction, government, slate, telephone, travel) and directly related terms",
+        "text_file": None,
+        "classes_wn": ["benign", "malignant"],
+        "classes_explicit": "skin lesion diagnosis, malignancy, benign and malignant tumors, and disease type names (melanoma, carcinoma, keratosis, dermatofibroma, vascular)",
     },
 }
 

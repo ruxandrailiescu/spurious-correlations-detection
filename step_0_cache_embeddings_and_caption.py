@@ -79,6 +79,20 @@ def cache_embeddings_and_caption(dataset: str, clip_model: str, device_str: str)
         # Caption training images
         utils.caption_images(dataset, device)
 
+        # Save image paths + captions to CSV
+        captions_csv_path = os.path.join(config.CACHE_PATH, "captions", dataset, "captions.csv")
+        captions_txt_path = os.path.join(config.CACHE_PATH, "captions", dataset, "train.txt")
+        with open(captions_txt_path, "r") as f:
+            captions = f.read().split("\n")
+        metadata = pd.read_csv(config.get_metadata_path(dataset))
+        train_filenames = metadata.filename[metadata.split == config.SPLIT_IDS["train"]].to_numpy()
+        image_dir = ds_config["image_dir"]
+        relative_paths = [os.path.join(image_dir, p) for p in train_filenames]
+        pd.DataFrame({"image_path": relative_paths, "caption": captions}).to_csv(
+            captions_csv_path, index=False
+        )
+        logging.info(f"Saved captions CSV to {captions_csv_path}")
+
         # Cache class name embeddings via CLIP text encoder
         tokenizer = open_clip.get_tokenizer(clip_arch)
         with torch.no_grad():

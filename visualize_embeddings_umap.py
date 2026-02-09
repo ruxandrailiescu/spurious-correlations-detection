@@ -1,56 +1,51 @@
-import constants
-import fire
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import torch
 import umap
+import config
+
+
+"""
+UMAP visualization of classifier weights and bias (keyword) embeddings.
+
+Projects the ERM classifier weight vectors and the top-ranked keyword
+embeddings into 2D via UMAP, coloring each keyword by its most-aligned class.
+
+Usage:
+    python visualize_embeddings_umap.py --dataset Waterbirds --only_spurious
+    python visualize_embeddings_umap.py --dataset CelebA --n_neighbors 20
+"""
 
 
 def visualize_weights_and_biases(
-    dataset,
-    exp_number,
-    only_spurious=False,
-    top_n_biases=50,
-    label_top_n=10,
-    n_neighbors=15,
-    min_dist=0.1,
+    dataset: str,
+    only_spurious: bool = False,
+    top_n_biases: int = 50,
+    label_top_n: int = 10,
+    n_neighbors: int = 15,
+    min_dist: float = 0.1,
 ):
-    """
-    UMAP visualization of classifier weights and bias embeddings.
-
-    Args:
-        dataset: Dataset name
-        exp_number: Experiment number
-        only_spurious: Whether to use only_spurious variant
-        top_n_biases: Number of top biases to plot
-        label_top_n: Number of top biases to label on the plot
-        n_neighbors: UMAP n_neighbors parameter
-        min_dist: UMAP min_dist parameter
-    """
     ending = "_only_spurious" if only_spurious else ""
-    dataset = str(dataset).lower()
-    exp_dir = f"{dataset}_exp{exp_number}"
 
     # Load classifier weights
     classifier_path = os.path.join(
-        constants.CLASSIFIER_PATH,
-        dataset,
-        f'erm_classifier{ending}.pt'
+        config.CACHE_PATH, "classifiers", dataset,
+        f"erm_classifier{ending}.pt",
     )
-    state_dict = torch.load(classifier_path, weights_only=True, map_location=torch.device('cpu'))
-    weights = state_dict['weight'].cpu().numpy()  # shape: [n_classes, embedding_dim]
+    state_dict = torch.load(classifier_path, weights_only=True, map_location="cpu")
+    weights = state_dict["weight"].cpu().numpy()
 
     # Load bias embeddings
     bias_path = os.path.join(
-        constants.RESULTS_PATH,
-        exp_dir,
-        f'filtered_keywords_and_embeddings{ending}.pt',
+        config.CACHE_PATH, "biases", dataset,
+        f"filtered_keywords_and_embeddings{ending}.pt",
     )
-    bias_dict = torch.load(bias_path, map_location=torch.device('cpu'))
-    bias_embeddings = bias_dict['keywords_embeddings'].cpu().numpy()  # shape: [n_biases, embedding_dim]
-    keywords = np.array(bias_dict['keywords'])
+    bias_dict = torch.load(bias_path, map_location="cpu")
+    bias_embeddings = bias_dict["keywords_embeddings"].cpu().numpy()
+    keywords = np.array(bias_dict["keywords"])
 
     # L2 normalize
     weights = weights / np.linalg.norm(weights, axis=1, keepdims=True)
@@ -58,16 +53,15 @@ def visualize_weights_and_biases(
 
     # Load ranking to get max_class for each bias
     ranking_path = os.path.join(
-        constants.RESULTS_PATH,
-        exp_dir,
-        f'bias_global_ranking{ending}.csv'
+        config.CACHE_PATH, "biases", dataset,
+        f"global_ranking{ending}.csv",
     )
     ranking_df = pd.read_csv(ranking_path)
 
     # Get top N biases from ranking
     top_biases = ranking_df.head(top_n_biases)
-    top_bias_names = top_biases['bias'].tolist()
-    top_bias_classes = top_biases['max_class'].tolist()
+    top_bias_names = top_biases["bias"].tolist()
+    top_bias_classes = top_biases["max_class"].tolist()
 
     # Get embeddings for top biases (maintain ranking order)
     bias_name_to_idx = {name: i for i, name in enumerate(keywords)}
@@ -86,8 +80,8 @@ def visualize_weights_and_biases(
         n_components=2,
         n_neighbors=n_neighbors,
         min_dist=min_dist,
-        metric='cosine',
-        random_state=constants.SEED,
+        metric="cosine",
+        random_state=config.SEED,
     )
     all_2d = reducer.fit_transform(all_embeddings)
 
@@ -95,9 +89,9 @@ def visualize_weights_and_biases(
     biases_2d = all_2d[len(weights):]
 
     # Get class names and create color map
-    class_names = constants.DATASET_CLASSES[dataset]
+    class_names = config.get_classes(dataset)
     n_classes = len(class_names)
-    cmap = plt.cm.get_cmap('tab10', n_classes)
+    cmap = plt.cm.get_cmap("tab10", n_classes)
     class_to_color = {cls: cmap(i) for i, cls in enumerate(class_names)}
 
     # Create figure
@@ -109,38 +103,50 @@ def visualize_weights_and_biases(
         color = class_to_color[cls]
         ax.scatter(x, y, c=[color], s=30, alpha=0.6)
 
-        # Label top N biases
         if i < label_top_n:
             ax.annotate(found_biases[i], (x, y), fontsize=8, alpha=0.8,
-                       xytext=(5, 5), textcoords='offset points')
+                        xytext=(5, 5), textcoords="offset points")
 
     # Plot classifier weights (larger markers with labels)
     for i, (x, y) in enumerate(weights_2d):
         cls = class_names[i]
         color = class_to_color[cls]
-        ax.scatter(x, y, c=[color], s=200, marker='*', edgecolors='black', linewidths=1.5)
-        ax.annotate(f'{cls.upper()}', (x, y), fontsize=12, fontweight='bold',
-                   xytext=(10, 10), textcoords='offset points')
+        ax.scatter(x, y, c=[color], s=200, marker="*", edgecolors="black", linewidths=1.5)
+        ax.annotate(f"{cls.upper()}", (x, y), fontsize=12, fontweight="bold",
+                    xytext=(10, 10), textcoords="offset points")
 
     # Create legend
     legend_elements = [plt.scatter([], [], c=[class_to_color[cls]], s=100, label=cls)
                        for cls in class_names]
-    ax.legend(handles=legend_elements, title='Class', loc='upper right')
+    ax.legend(handles=legend_elements, title="Class", loc="upper right")
 
-    ax.set_xlabel('UMAP 1')
-    ax.set_ylabel('UMAP 2')
-    ax.set_title(f'{dataset}: Classifier Weights and Top {top_n_biases} Bias Embeddings (UMAP)\n(Stars = class weights, dots = bias keywords)')
+    ax.set_xlabel("UMAP 1")
+    ax.set_ylabel("UMAP 2")
+    ax.set_title(f"{dataset}: Classifier Weights and Top {top_n_biases} Bias Embeddings (UMAP)\n"
+                 f"(Stars = class weights, dots = bias keywords)")
 
     # Save plot
-    output_dir = os.path.join(constants.RESULTS_PATH, exp_dir, 'visualizations')
+    output_dir = os.path.join(config.RESULTS_PATH, dataset, "visualizations")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_path = os.path.join(output_dir, f'weights_and_biases_umap{ending}.png')
-    fig.savefig(output_path, dpi=150, bbox_inches='tight')
+    output_path = os.path.join(output_dir, f"weights_and_biases_umap{ending}.png")
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     print(f"Saved visualization to {output_path}")
 
 
-if __name__ == '__main__':
-    fire.Fire(visualize_weights_and_biases)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="UMAP visualization of weights and bias embeddings")
+    parser.add_argument("--dataset", type=str, default="Waterbirds", choices=list(config.DATASETS.keys()))
+    parser.add_argument("--only_spurious", action="store_true")
+    parser.add_argument("--top_n_biases", type=int, default=50)
+    parser.add_argument("--label_top_n", type=int, default=10)
+    parser.add_argument("--n_neighbors", type=int, default=15)
+    parser.add_argument("--min_dist", type=float, default=0.1)
+    args = parser.parse_args()
+
+    visualize_weights_and_biases(
+        args.dataset, args.only_spurious, args.top_n_biases,
+        args.label_top_n, args.n_neighbors, args.min_dist,
+    )
